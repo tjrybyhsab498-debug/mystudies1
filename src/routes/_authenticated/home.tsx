@@ -43,7 +43,7 @@ function HomePage() {
       if (!userData.user) return null;
       const { data } = await supabase
         .from("profiles")
-        .select("full_name, avatar_url, grade_level")
+        .select("full_name, avatar_url, education_stage")
         .eq("id", userData.user.id)
         .maybeSingle();
       return data;
