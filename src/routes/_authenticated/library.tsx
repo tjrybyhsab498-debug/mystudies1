@@ -31,7 +31,7 @@ function LibraryPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("id, title, file_path, file_size, page_count, created_at")
+        .select("id, title, storage_path, file_size, page_count, created_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -67,7 +67,7 @@ function LibraryPage() {
       const { error: insertError } = await supabase.from("documents").insert({
         user_id: userId,
         title: file.name.replace(/\.pdf$/i, ""),
-        file_path: path,
+        storage_path: path,
         file_size: file.size,
       });
       if (insertError) throw insertError;
@@ -138,7 +138,7 @@ function LibraryPage() {
                 variant="ghost"
                 size="icon"
                 aria-label="حذف"
-                onClick={() => remove(doc.id, doc.file_path)}
+                onClick={() => remove(doc.id, doc.storage_path)}
               >
                 <Trash2 className="size-4 text-destructive" />
               </Button>
