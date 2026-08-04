@@ -91,7 +91,7 @@ function HomePage() {
         <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
           <span className="text-xs text-muted-foreground">المرحلة الدراسية</span>
           <p className="mt-2 truncate text-sm font-bold text-foreground">
-            {profile?.grade_level ?? "غير محددة"}
+            {profile?.education_stage ?? "غير محددة"}
           </p>
         </div>
       </div>
