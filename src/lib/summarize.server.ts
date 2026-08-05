@@ -81,7 +81,7 @@ export async function runSummaryModel(args: SummarizeArgs): Promise<SummaryConte
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new Error("LOVABLE_API_KEY is missing");
 
-  const gateway = createLovableAiGatewayProvider(apiKey);
+  const gateway = createLovableAiGatewayProvider(apiKey, undefined, { structuredOutputs: true });
 
   try {
     const result = streamText({
