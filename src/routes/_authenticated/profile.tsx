@@ -108,7 +108,12 @@ function ProfilePage() {
       <div className="mt-4 space-y-4 rounded-2xl border border-border bg-card p-4 shadow-soft">
         <div className="space-y-2">
           <Label htmlFor="name">الاسم الكامل</Label>
-          <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={80} />
+          <Input
+            id="name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            maxLength={80}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="stage">المرحلة الدراسية</Label>

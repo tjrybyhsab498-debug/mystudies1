@@ -85,7 +85,10 @@ function Landing() {
         <h2 className="text-base font-bold text-foreground">ماذا يقدّم لك التطبيق؟</h2>
         <div className="mt-4 grid grid-cols-2 gap-3">
           {features.map(({ icon: Icon, title, desc }) => (
-            <article key={title} className="rounded-2xl border border-border bg-card p-4 shadow-soft">
+            <article
+              key={title}
+              className="rounded-2xl border border-border bg-card p-4 shadow-soft"
+            >
               <span className="flex size-10 items-center justify-center rounded-xl bg-primary-soft text-primary">
                 <Icon className="size-5" />
               </span>
