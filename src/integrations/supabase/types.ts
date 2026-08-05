@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      document_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string
+          document_id: string
+          embedding: string | null
+          id: string
+          page_from: number | null
+          page_to: number | null
+          user_id: string
+        }
+        Insert: {
+          chunk_index?: number
+          content: string
+          created_at?: string
+          document_id: string
+          embedding?: string | null
+          id?: string
+          page_from?: number | null
+          page_to?: number | null
+          user_id: string
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          document_id?: string
+          embedding?: string | null
+          id?: string
+          page_from?: number | null
+          page_to?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           created_at: string
@@ -124,6 +168,59 @@ export type Database = {
         }
         Relationships: []
       }
+      summaries: {
+        Row: {
+          content: Json | null
+          created_at: string
+          document_id: string
+          error_message: string | null
+          feature: string
+          id: string
+          page_from: number | null
+          page_to: number | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string
+          document_id: string
+          error_message?: string | null
+          feature?: string
+          id?: string
+          page_from?: number | null
+          page_to?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string
+          document_id?: string
+          error_message?: string | null
+          feature?: string
+          id?: string
+          page_from?: number | null
+          page_to?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "summaries_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -156,6 +253,20 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      match_document_chunks: {
+        Args: {
+          _document_id: string
+          _match_count?: number
+          _query_embedding: string
+        }
+        Returns: {
+          content: string
+          id: string
+          page_from: number
+          page_to: number
+          similarity: number
+        }[]
       }
     }
     Enums: {
