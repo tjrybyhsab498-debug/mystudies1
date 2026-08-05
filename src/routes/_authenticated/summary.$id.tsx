@@ -1,6 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, ArrowRight, CalendarDays, ListChecks, Quote, Sigma, Table2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CalendarDays,
+  ListChecks,
+  Quote,
+  Sigma,
+  Table2,
+} from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +18,10 @@ export const Route = createFileRoute("/_authenticated/summary/$id")({
   head: () => ({
     meta: [
       { title: "الكبسولة الذكية — دراستي AI" },
-      { name: "description", content: "ملخص خارق مع التعريفات والقوانين والتواريخ وأرقام الصفحات." },
+      {
+        name: "description",
+        content: "ملخص خارق مع التعريفات والقوانين والتواريخ وأرقام الصفحات.",
+      },
       { property: "og:title", content: "الكبسولة الذكية — دراستي AI" },
       { property: "og:description", content: "ملخص شمولي موثّق بأرقام الصفحات من ملزمتك." },
     ],
@@ -70,7 +81,9 @@ function SummaryPage() {
     <AppShell
       title={data?.title ?? "الكبسولة الذكية"}
       subtitle={
-        data?.page_from && data?.page_to ? `صفحات ${data.page_from}–${data.page_to}` : "المادة كاملة"
+        data?.page_from && data?.page_to
+          ? `صفحات ${data.page_from}–${data.page_to}`
+          : "المادة كاملة"
       }
     >
       <Link

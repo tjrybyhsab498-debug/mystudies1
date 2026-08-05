@@ -1,11 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import {
-  chunkSourceText,
-  runSummaryModel,
-  toArabicGatewayError,
-} from "@/lib/summarize.server";
+import { chunkSourceText, runSummaryModel, toArabicGatewayError } from "@/lib/summarize.server";
 
 const generateSummaryInput = z.object({
   documentId: z.string().uuid(),
@@ -29,7 +25,8 @@ export const generateSummary = createServerFn({ method: "POST" })
     if (!doc) throw new Error("الملف غير موجود");
 
     const pageFrom = data.pageFrom;
-    const pageTo = data.pageTo && data.pageFrom && data.pageTo < data.pageFrom ? data.pageFrom : data.pageTo;
+    const pageTo =
+      data.pageTo && data.pageFrom && data.pageTo < data.pageFrom ? data.pageFrom : data.pageTo;
 
     const { data: row, error: insertError } = await supabase
       .from("summaries")

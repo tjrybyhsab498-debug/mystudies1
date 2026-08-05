@@ -73,7 +73,8 @@ export function FeatureSheet({
         <div className="space-y-4 px-4 pb-2">
           {!feature.ready ? (
             <p className="rounded-2xl border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-              هذه الميزة قيد التطوير وستُفتح في التحديث القادم. الكبسولة الذكية (التلخيص) جاهزة الآن.
+              هذه الميزة قيد التطوير وستُفتح في التحديث القادم. الكبسولة الذكية (التلخيص) جاهزة
+              الآن.
             </p>
           ) : null}
 

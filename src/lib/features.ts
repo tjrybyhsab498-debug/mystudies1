@@ -11,14 +11,7 @@ import {
 } from "lucide-react";
 
 export type FeatureId =
-  | "summarize"
-  | "flashcards"
-  | "audio"
-  | "ocr"
-  | "mindmap"
-  | "solver"
-  | "planner"
-  | "tutor";
+  "summarize" | "flashcards" | "audio" | "ocr" | "mindmap" | "solver" | "planner" | "tutor";
 
 export type FeatureConfigKind = "page-range" | "count" | "none";
 

@@ -28,7 +28,11 @@ export async function getPdfPageCount(data: ArrayBuffer): Promise<number> {
  */
 export async function extractPdfText(
   data: ArrayBuffer,
-  options: { pageFrom?: number | null; pageTo?: number | null; onProgress?: (done: number, total: number) => void } = {},
+  options: {
+    pageFrom?: number | null;
+    pageTo?: number | null;
+    onProgress?: (done: number, total: number) => void;
+  } = {},
 ): Promise<{ pages: PageText[]; totalPages: number }> {
   const pdfjs = await getPdfjs();
   const doc = await pdfjs.getDocument({ data: new Uint8Array(data) }).promise;

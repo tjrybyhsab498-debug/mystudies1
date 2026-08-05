@@ -11,7 +11,10 @@ export const Route = createFileRoute("/_authenticated/home")({
   head: () => ({
     meta: [
       { title: "الرئيسية — دراستي AI" },
-      { name: "description", content: "لوحة تحكم دراستي AI: ابدأ التلخيص أو ذاكر مع الأستاذ الرقمي." },
+      {
+        name: "description",
+        content: "لوحة تحكم دراستي AI: ابدأ التلخيص أو ذاكر مع الأستاذ الرقمي.",
+      },
       { property: "og:title", content: "الرئيسية — دراستي AI" },
       { property: "og:description", content: "كل أدوات المذاكرة الذكية في مكان واحد." },
     ],
@@ -49,7 +52,11 @@ function HomePage() {
   const firstName = profile?.full_name?.split(" ")[0] ?? "طالبنا المتفوق";
 
   return (
-    <AppShell title={`أهلاً، ${firstName}`} subtitle="جاهز لجلسة مذاكرة ذكية؟" action={<ThemeToggle />}>
+    <AppShell
+      title={`أهلاً، ${firstName}`}
+      subtitle="جاهز لجلسة مذاكرة ذكية؟"
+      action={<ThemeToggle />}
+    >
       <section className="rounded-3xl bg-hero-gradient p-5 text-primary-foreground shadow-float">
         <span className="flex items-center gap-2 text-xs font-semibold opacity-90">
           <Sparkles className="size-4" />

@@ -23,7 +23,10 @@ export const Route = createFileRoute("/_authenticated/library")({
   head: () => ({
     meta: [
       { title: "مكتبتي — دراستي AI" },
-      { name: "description", content: "المستودع السحابي: ارفع ملفات PDF وملازمك وزامنها بين أجهزتك." },
+      {
+        name: "description",
+        content: "المستودع السحابي: ارفع ملفات PDF وملازمك وزامنها بين أجهزتك.",
+      },
       { property: "og:title", content: "مكتبتي — دراستي AI" },
       { property: "og:description", content: "كل ملازمك وملخصاتك محفوظة بأمان في مكان واحد." },
     ],
@@ -231,7 +234,10 @@ function LibraryPage() {
         {isLoading ? (
           <>
             {[0, 1, 2].map((i) => (
-              <div key={i} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+              <div
+                key={i}
+                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
+              >
                 <Skeleton className="size-10 rounded-xl" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-2/3" />
@@ -261,7 +267,9 @@ function LibraryPage() {
                   <FileText className="size-5" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold text-foreground">{doc.title}</span>
+                  <span className="block truncate text-sm font-bold text-foreground">
+                    {doc.title}
+                  </span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">
                     {doc.file_size ? `${(doc.file_size / 1024 / 1024).toFixed(1)} م.ب` : "PDF"}
                     {" · "}
@@ -269,12 +277,7 @@ function LibraryPage() {
                   </span>
                 </span>
               </button>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="حذف"
-                onClick={() => remove(doc)}
-              >
+              <Button variant="ghost" size="icon" aria-label="حذف" onClick={() => remove(doc)}>
                 <Trash2 className="size-4 text-destructive" />
               </Button>
             </article>

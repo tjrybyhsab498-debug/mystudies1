@@ -12,7 +12,12 @@ export const summarySchema = z.object({
     z.object({ term: z.string(), definition: z.string(), page: z.number().nullable() }),
   ),
   formulas: z.array(
-    z.object({ name: z.string(), formula: z.string(), note: z.string().nullable(), page: z.number().nullable() }),
+    z.object({
+      name: z.string(),
+      formula: z.string(),
+      note: z.string().nullable(),
+      page: z.number().nullable(),
+    }),
   ),
   dates: z.array(z.object({ date: z.string(), event: z.string(), page: z.number().nullable() })),
   comparisons: z.array(
@@ -47,7 +52,9 @@ export type SummarizeArgs = {
 
 export function buildUserPrompt({ sourceText, pageFrom, pageTo, documentTitle }: SummarizeArgs) {
   const range =
-    pageFrom && pageTo ? `النطاق المطلوب: الصفحات ${pageFrom} إلى ${pageTo}.` : "النطاق: المادة كاملة.";
+    pageFrom && pageTo
+      ? `النطاق المطلوب: الصفحات ${pageFrom} إلى ${pageTo}.`
+      : "النطاق: المادة كاملة.";
   return `عنوان الملف: ${documentTitle}\n${range}\n\n=== نص المادة ===\n${sourceText}`;
 }
 
@@ -71,8 +78,10 @@ export function normalizeSummary(raw: SummaryContent, fallbackTitle: string): Su
 export function toArabicGatewayError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   if (message.includes("429")) return "الخدمة مشغولة حالياً (تجاوز حد الطلبات). حاول بعد قليل.";
-  if (message.includes("402")) return "انتهى رصيد الذكاء الاصطناعي في مساحة العمل. يرجى إضافة رصيد.";
-  if (message.includes("401") || message.includes("403")) return "تعذّر التحقق من مفتاح الذكاء الاصطناعي.";
+  if (message.includes("402"))
+    return "انتهى رصيد الذكاء الاصطناعي في مساحة العمل. يرجى إضافة رصيد.";
+  if (message.includes("401") || message.includes("403"))
+    return "تعذّر التحقق من مفتاح الذكاء الاصطناعي.";
   return "تعذّر توليد الملخص. حاول مرة أخرى أو قلّل نطاق الصفحات.";
 }
 
@@ -104,7 +113,12 @@ export async function runSummaryModel(args: SummarizeArgs): Promise<SummaryConte
 /** تقطيع ذكي للنص مع الحفاظ على أرقام الصفحات، أساس البحث الدلالي (RAG). */
 export function chunkSourceText(sourceText: string, maxChars = 3000) {
   const parts = sourceText.split(/\n?\[صفحة (\d+)\]\n?/);
-  const chunks: { chunk_index: number; page_from: number | null; page_to: number | null; content: string }[] = [];
+  const chunks: {
+    chunk_index: number;
+    page_from: number | null;
+    page_to: number | null;
+    content: string;
+  }[] = [];
 
   let current = "";
   let startPage: number | null = null;
