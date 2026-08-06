@@ -79,7 +79,7 @@ function buildUserPrompt(args: {
   pageFrom: number | null;
   pageTo: number | null;
   documentTitle: string;
-  partLabel?: string;
+  partLabel?: string | undefined;
 }) {
   const range =
     args.pageFrom && args.pageTo
