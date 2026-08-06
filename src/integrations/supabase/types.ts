@@ -108,14 +108,132 @@ export type Database = {
           },
         ]
       }
+      flashcard_decks: {
+        Row: {
+          card_count: number
+          created_at: string
+          document_id: string | null
+          id: string
+          page_from: number | null
+          page_to: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_count?: number
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          page_from?: number | null
+          page_to?: number | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_count?: number
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          page_from?: number | null
+          page_to?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_decks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flashcards: {
+        Row: {
+          back: string
+          created_at: string
+          deck_id: string
+          due_at: string | null
+          ease: number
+          front: string
+          id: string
+          page: number | null
+          position: number
+          user_id: string
+        }
+        Insert: {
+          back: string
+          created_at?: string
+          deck_id: string
+          due_at?: string | null
+          ease?: number
+          front: string
+          id?: string
+          page?: number | null
+          position?: number
+          user_id: string
+        }
+        Update: {
+          back?: string
+          created_at?: string
+          deck_id?: string
+          due_at?: string | null
+          ease?: number
+          front?: string
+          id?: string
+          page?: number | null
+          position?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcards_deck_id_fkey"
+            columns: ["deck_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_decks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      focus_sessions: {
+        Row: {
+          completed: boolean
+          created_at: string
+          id: string
+          minutes: number
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          minutes?: number
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          minutes?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
           education_stage: string | null
           full_name: string | null
+          grade: string | null
           id: string
+          institution: string | null
           specialty: string | null
+          study_goal: string | null
           updated_at: string
         }
         Insert: {
@@ -123,8 +241,11 @@ export type Database = {
           created_at?: string
           education_stage?: string | null
           full_name?: string | null
+          grade?: string | null
           id: string
+          institution?: string | null
           specialty?: string | null
+          study_goal?: string | null
           updated_at?: string
         }
         Update: {
@@ -132,11 +253,64 @@ export type Database = {
           created_at?: string
           education_stage?: string | null
           full_name?: string | null
+          grade?: string | null
           id?: string
+          institution?: string | null
           specialty?: string | null
+          study_goal?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      quizzes: {
+        Row: {
+          created_at: string
+          document_id: string | null
+          id: string
+          page_from: number | null
+          page_to: number | null
+          questions: Json
+          score: number | null
+          taken_at: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          page_from?: number | null
+          page_to?: number | null
+          questions?: Json
+          score?: number | null
+          taken_at?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          page_from?: number | null
+          page_to?: number | null
+          questions?: Json
+          score?: number | null
+          taken_at?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quizzes_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subjects: {
         Row: {
@@ -172,6 +346,7 @@ export type Database = {
         Row: {
           content: Json | null
           created_at: string
+          depth: string
           document_id: string
           error_message: string | null
           feature: string
@@ -182,10 +357,12 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          word_count: number
         }
         Insert: {
           content?: Json | null
           created_at?: string
+          depth?: string
           document_id: string
           error_message?: string | null
           feature?: string
@@ -196,10 +373,12 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id: string
+          word_count?: number
         }
         Update: {
           content?: Json | null
           created_at?: string
+          depth?: string
           document_id?: string
           error_message?: string | null
           feature?: string
@@ -210,10 +389,46 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          word_count?: number
         }
         Relationships: [
           {
             foreignKeyName: "summaries_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tutor_messages: {
+        Row: {
+          content: string
+          created_at: string
+          document_id: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutor_messages_document_id_fkey"
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
