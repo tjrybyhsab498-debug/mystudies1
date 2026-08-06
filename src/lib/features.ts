@@ -3,17 +3,28 @@ import {
   CalendarClock,
   FileText,
   Layers,
+  ListChecks,
   Mic,
   Network,
   ScanLine,
   Sigma,
+  Timer,
   type LucideIcon,
 } from "lucide-react";
 
 export type FeatureId =
-  "summarize" | "flashcards" | "audio" | "ocr" | "mindmap" | "solver" | "planner" | "tutor";
+  | "summarize"
+  | "flashcards"
+  | "quiz"
+  | "audio"
+  | "ocr"
+  | "mindmap"
+  | "solver"
+  | "planner"
+  | "focus"
+  | "tutor";
 
-export type FeatureConfigKind = "page-range" | "count" | "none";
+export type FeatureConfigKind = "page-range" | "depth-range" | "count" | "none";
 
 export type FeatureDef = {
   id: FeatureId;
@@ -21,7 +32,7 @@ export type FeatureDef = {
   desc: string;
   icon: LucideIcon;
   /** المسار الذي تنتقل إليه البطاقة */
-  target: "library" | "tutor" | "home";
+  target: "library" | "tutor" | "home" | "focus";
   /** نص الشريط السياقي داخل المكتبة */
   pickerHint: string;
   configKind: FeatureConfigKind;
@@ -34,11 +45,11 @@ export const FEATURES: FeatureDef[] = [
   {
     id: "summarize",
     title: "الكبسولة الذكية",
-    desc: "لخّص ملفك",
+    desc: "بسيط أو شامل",
     icon: FileText,
     target: "library",
     pickerHint: "اختر ملف PDF لتوليد ملخص خارق منه",
-    configKind: "page-range",
+    configKind: "depth-range",
     ready: true,
     cta: "ابدأ التلخيص",
   },
@@ -63,6 +74,28 @@ export const FEATURES: FeatureDef[] = [
     configKind: "count",
     ready: false,
     cta: "توليد البطاقات",
+  },
+  {
+    id: "quiz",
+    title: "الاختبار المحاكي",
+    desc: "امتحان تفاعلي",
+    icon: ListChecks,
+    target: "library",
+    pickerHint: "اختر ملفاً لتوليد امتحان محاكٍ منه",
+    configKind: "count",
+    ready: false,
+    cta: "توليد الاختبار",
+  },
+  {
+    id: "focus",
+    title: "رادار التركيز",
+    desc: "بومودورو وإنجاز",
+    icon: Timer,
+    target: "focus",
+    pickerHint: "ابدأ جلسة تركيز",
+    configKind: "none",
+    ready: false,
+    cta: "ابدأ الجلسة",
   },
   {
     id: "audio",
