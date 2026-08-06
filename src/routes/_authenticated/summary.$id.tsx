@@ -122,6 +122,43 @@ function SummaryPage() {
             </p>
           </section>
 
+          {(content.sections ?? []).length > 0 ? (
+            <div className="mt-5 space-y-3">
+              {content.sections.map((section, i) => (
+                <section
+                  key={i}
+                  className="rounded-2xl border border-border bg-card p-4 shadow-soft"
+                >
+                  <h2 className="flex items-start gap-2 text-sm font-bold text-foreground">
+                    <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-primary-soft text-[11px] text-primary">
+                      {i + 1}
+                    </span>
+                    <span>
+                      {section.heading}
+                      <PageBadge page={section.page_from} />
+                    </span>
+                  </h2>
+                  {section.intro ? (
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                      {section.intro}
+                    </p>
+                  ) : null}
+                  <ul className="mt-2 space-y-2 text-sm leading-relaxed text-foreground/90">
+                    {section.points.map((point, p) => (
+                      <li key={p} className="flex gap-2">
+                        <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary/70" />
+                        <span>
+                          {point.text}
+                          <PageBadge page={point.page} />
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          ) : null}
+
           {content.key_points.length > 0 ? (
             <Section title="أهم النقاط" icon={ListChecks}>
               <ul className="space-y-2">
