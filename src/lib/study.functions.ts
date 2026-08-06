@@ -129,12 +129,14 @@ export const askTutor = createServerFn({ method: "POST" })
       if (chunks && chunks.length > 0) contextText = pickRelevantChunks(chunks, data.question);
     }
 
-    const { data: history } = await supabase
+    const historyQuery = supabase
       .from("tutor_messages")
       .select("role, content")
-      .eq("document_id", data.documentId)
       .order("created_at", { ascending: false })
       .limit(10);
+    const { data: history } = await (data.documentId
+      ? historyQuery.eq("document_id", data.documentId)
+      : historyQuery.is("document_id", null));
 
     const ordered = (history ?? [])
       .reverse()
