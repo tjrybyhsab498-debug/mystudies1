@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FileText, Loader2, Sparkles, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
@@ -10,7 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FeatureSheet, type FeatureRunConfig } from "@/components/library/feature-sheet";
 import { getFeature } from "@/lib/features";
-import { buildSourceText, extractPdfText } from "@/lib/pdf-text";
+import {
+  buildSourceText,
+  extractPdfText,
+  getCachedPages,
+  pdfCacheKey,
+  setCachedPages,
+  warmPdfEngine,
+} from "@/lib/pdf-text";
 import { generateSummary } from "@/lib/summarize.functions";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -55,6 +62,10 @@ function LibraryPage() {
   const [selected, setSelected] = useState<DocumentRow | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
 
+  useEffect(() => {
+    warmPdfEngine();
+  }, []);
+
   const activeFeature = getFeature(featureId);
   const pickMode = Boolean(activeFeature);
 
@@ -89,31 +100,47 @@ function LibraryPage() {
 
   const runFeature = useMutation({
     mutationFn: async ({ doc, config }: { doc: DocumentRow; config: FeatureRunConfig }) => {
-      setProgress("جارٍ تنزيل الملف…");
-      const { data: file, error } = await supabase.storage
-        .from("study-files")
-        .download(doc.storage_path);
-      if (error || !file) throw new Error("تعذّر تنزيل الملف من المستودع");
+      const cacheKey = pdfCacheKey(doc.id, config.pageFrom, config.pageTo);
+      const cached = await getCachedPages(cacheKey);
 
-      const buffer = await file.arrayBuffer();
-      setProgress("جارٍ استخراج النص من الصفحات…");
-      const { pages } = await extractPdfText(buffer, {
-        pageFrom: config.pageFrom,
-        pageTo: config.pageTo,
-        onProgress: (done, total) => setProgress(`استخراج النص: ${done} / ${total} صفحة`),
-      });
+      let pages = cached?.pages ?? [];
+      if (pages.length === 0) {
+        setProgress("جارٍ تنزيل الملف…");
+        const { data: file, error } = await supabase.storage
+          .from("study-files")
+          .download(doc.storage_path);
+        if (error || !file) throw new Error("تعذّر تنزيل الملف من المستودع");
 
-      const sourceText = buildSourceText(pages);
+        const buffer = await file.arrayBuffer();
+        setProgress("جارٍ استخراج النص من الصفحات…");
+        const extracted = await extractPdfText(buffer, {
+          pageFrom: config.pageFrom,
+          pageTo: config.pageTo,
+          onProgress: (done, total) => setProgress(`استخراج النص: ${done} / ${total} صفحة`),
+        });
+        pages = extracted.pages;
+        void setCachedPages(cacheKey, pages, extracted.totalPages);
+      }
+
+      const sourceText = buildSourceText(
+        pages,
+        config.depth === "comprehensive" ? 320_000 : 120_000,
+      );
       if (sourceText.length < 200) {
         throw new Error("لم يُعثر على نص قابل للقراءة في هذا النطاق (قد يكون الملف صوراً ممسوحة).");
       }
 
-      setProgress("الذكاء الاصطناعي يحلل المادة ويكتب الملخص…");
+      setProgress(
+        config.depth === "comprehensive"
+          ? "الذكاء الاصطناعي يبني ملخصاً شاملاً وافياً (قد يستغرق دقيقة)…"
+          : "الذكاء الاصطناعي يحلل المادة ويكتب الملخص…",
+      );
       const result = await generateSummary({
         data: {
           documentId: doc.id,
           pageFrom: config.pageFrom,
           pageTo: config.pageTo,
+          depth: config.depth,
           sourceText,
         },
       });
