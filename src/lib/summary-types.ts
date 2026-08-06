@@ -1,7 +1,18 @@
+export type SummaryPoint = { text: string; page: number | null };
+
+export type SummarySection = {
+  heading: string;
+  page_from: number | null;
+  page_to: number | null;
+  intro: string | null;
+  points: SummaryPoint[];
+};
+
 export type SummaryContent = {
   title: string;
   overview: string;
-  key_points: { text: string; page: number | null }[];
+  sections: SummarySection[];
+  key_points: SummaryPoint[];
   terms: { term: string; definition: string; page: number | null }[];
   formulas: { name: string; formula: string; note: string | null; page: number | null }[];
   dates: { date: string; event: string; page: number | null }[];
@@ -13,3 +24,5 @@ export type SummaryContent = {
   }[];
   likely_questions: { question: string; answer: string }[];
 };
+
+export type SummaryDepth = "standard" | "comprehensive";

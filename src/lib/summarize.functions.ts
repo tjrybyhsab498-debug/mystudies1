@@ -1,13 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { chunkSourceText, runSummaryModel, toArabicGatewayError } from "@/lib/summarize.server";
+import {
+  chunkSourceText,
+  countWords,
+  runSummaryModel,
+  toArabicGatewayError,
+} from "@/lib/summarize.server";
 
 const generateSummaryInput = z.object({
   documentId: z.string().uuid(),
   pageFrom: z.number().int().min(1).max(10_000).nullable(),
   pageTo: z.number().int().min(1).max(10_000).nullable(),
-  sourceText: z.string().trim().min(200).max(150_000),
+  depth: z.enum(["standard", "comprehensive"]).default("standard"),
+  sourceText: z.string().trim().min(200).max(400_000),
 });
 
 export const generateSummary = createServerFn({ method: "POST" })
@@ -24,6 +30,16 @@ export const generateSummary = createServerFn({ method: "POST" })
     if (docError) throw new Error("تعذّر قراءة بيانات الملف");
     if (!doc) throw new Error("الملف غير موجود");
 
+    // حد استخدام بسيط: 20 عملية تلخيص في الساعة لكل طالب.
+    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recentCount } = await supabase
+      .from("summaries")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", since);
+    if ((recentCount ?? 0) >= 20) {
+      throw new Error("بلغت الحد الأقصى للتلخيص هذه الساعة. حاول بعد قليل.");
+    }
+
     const pageFrom = data.pageFrom;
     const pageTo =
       data.pageTo && data.pageFrom && data.pageTo < data.pageFrom ? data.pageFrom : data.pageTo;
@@ -34,6 +50,7 @@ export const generateSummary = createServerFn({ method: "POST" })
         user_id: userId,
         document_id: doc.id,
         feature: "summarize",
+        depth: data.depth,
         page_from: pageFrom,
         page_to: pageTo,
         title: doc.title,
@@ -49,11 +66,17 @@ export const generateSummary = createServerFn({ method: "POST" })
         pageFrom,
         pageTo: pageTo ?? null,
         documentTitle: doc.title,
+        depth: data.depth,
       });
 
       await supabase
         .from("summaries")
-        .update({ status: "ready", content, title: content.title || doc.title })
+        .update({
+          status: "ready",
+          content,
+          word_count: countWords(content),
+          title: content.title || doc.title,
+        })
         .eq("id", row.id);
 
       const chunks = chunkSourceText(data.sourceText).map((chunk) => ({
