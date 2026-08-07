@@ -98,6 +98,33 @@ function LibraryPage() {
     },
   });
 
+  const { data: decks } = useQuery({
+    queryKey: ["decks"],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("flashcard_decks")
+        .select("id, title, card_count")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      return data ?? [];
+    },
+  });
+
+  const { data: quizzes } = useQuery({
+    queryKey: ["quizzes"],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("quizzes")
+        .select("id, title, score")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      return data ?? [];
+    },
+  });
+
+
   const clearFeature = () => navigate({ search: { feature: "" } });
 
   const runFeature = useMutation({
