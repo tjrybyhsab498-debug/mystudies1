@@ -251,7 +251,9 @@ export function countWords(content: SummaryContent): number {
 }
 
 /** يستدعي بوابة Lovable AI ويعيد ملخصاً منظماً ومرتباً. */
-export async function runSummaryModel(args: SummarizeArgs): Promise<SummaryContent> {
+export async function runSummaryModel(
+  args: SummarizeArgs & { onProgress?: (done: number, total: number) => void },
+): Promise<SummaryContent> {
   if (args.depth === "standard") {
     const raw = await callModel({
       model: SUMMARY_MODEL_STANDARD,
@@ -261,34 +263,56 @@ export async function runSummaryModel(args: SummarizeArgs): Promise<SummaryConte
     return normalizeSummary(raw, args.documentTitle, "standard");
   }
 
-  // شامل وافٍ: معالجة تسلسلية للأجزاء ثم دمج مرتّب حتى لا يُقتطع أي محتوى.
-  const segments = splitByPages(args.sourceText, 24_000).slice(0, 8);
-  const results: RawSummary[] = [];
+  // شامل وافٍ: أجزاء متسلسلة على حدود الصفحات، تُنفَّذ على دفعات محدودة التزامن،
+  // وكل جزء له بديل أسرع. الفشل الجزئي لا يُلغي النتيجة كاملة.
+  const segments = splitByPages(args.sourceText, 22_000).slice(0, 10);
+  const total = segments.length;
+  const results: (RawSummary | null)[] = new Array(total).fill(null);
+  const CONCURRENCY = 3;
+  let done = 0;
 
-  for (let i = 0; i < segments.length; i += 1) {
+  const runSegment = async (index: number) => {
     const partLabel =
-      segments.length > 1
-        ? `هذا الجزء ${i + 1} من ${segments.length} من المادة. لخّصه كاملاً وبتراتبيته دون الإشارة لأجزاء أخرى.`
+      total > 1
+        ? `هذا الجزء ${index + 1} من ${total} من المادة. لخّصه كاملاً وبتراتبيته دون الإشارة لأجزاء أخرى.`
         : undefined;
     const prompt = buildUserPrompt({
-      sourceText: segments[i]!,
+      sourceText: segments[index]!,
       pageFrom: args.pageFrom,
       pageTo: args.pageTo,
       documentTitle: args.documentTitle,
       partLabel,
     });
 
-    try {
-      results.push(await callModel({ model: SUMMARY_MODEL_DEEP, system: DEEP_RULES, prompt }));
-    } catch {
-      // احتياط: نموذج أسرع في حال تعذّر النموذج الأقوى لهذا الجزء.
-      results.push(await callModel({ model: SUMMARY_MODEL_STANDARD, system: DEEP_RULES, prompt }));
+    for (const model of [SUMMARY_MODEL_DEEP, SUMMARY_MODEL_STANDARD, SUMMARY_MODEL_STANDARD]) {
+      try {
+        results[index] = await callModel({ model, system: DEEP_RULES, prompt });
+        break;
+      } catch {
+        // نجرّب النموذج التالي؛ إن فشلت كل المحاولات نتجاوز هذا الجزء.
+      }
     }
+    done += 1;
+    args.onProgress?.(done, total);
+  };
+
+  for (let start = 0; start < total; start += CONCURRENCY) {
+    const batch: Promise<void>[] = [];
+    for (let i = start; i < Math.min(start + CONCURRENCY, total); i += 1) batch.push(runSegment(i));
+    await Promise.all(batch);
   }
 
-  if (results.length === 0) throw new Error("تعذّر توليد الملخص الشامل. حاول مرة أخرى.");
-  return normalizeSummary(mergeSummaries(results, args.documentTitle), args.documentTitle, "comprehensive");
+  const ok = results.filter((r): r is RawSummary => r !== null);
+  if (ok.length === 0) {
+    throw new Error("تعذّر توليد الملخص الشامل. حاول بنطاق صفحات أصغر.");
+  }
+  return normalizeSummary(
+    mergeSummaries(ok, args.documentTitle),
+    args.documentTitle,
+    "comprehensive",
+  );
 }
+
 
 /** تقطيع ذكي للنص مع الحفاظ على أرقام الصفحات، أساس البحث الدلالي (RAG). */
 export function chunkSourceText(sourceText: string, maxChars = 3000) {
