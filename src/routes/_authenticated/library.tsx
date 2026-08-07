@@ -443,6 +443,62 @@ function LibraryPage() {
         </>
       ) : null}
 
+      {decks && decks.length > 0 ? (
+        <>
+          <h2 className="mt-7 text-base font-bold text-foreground">بطاقاتي</h2>
+          <div className="mt-3 space-y-2">
+            {decks.map((deck) => (
+              <Link
+                key={deck.id}
+                to="/flashcards/$id"
+                params={{ id: deck.id }}
+                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-soft"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                  <Layers className="size-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold text-foreground">
+                    {deck.title}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{deck.card_count} بطاقة</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </>
+      ) : null}
+
+      {quizzes && quizzes.length > 0 ? (
+        <>
+          <h2 className="mt-7 text-base font-bold text-foreground">اختباراتي</h2>
+          <div className="mt-3 space-y-2">
+            {quizzes.map((quiz) => (
+              <Link
+                key={quiz.id}
+                to="/quiz/$id"
+                params={{ id: quiz.id }}
+                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-soft"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                  <ListChecks className="size-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold text-foreground">
+                    {quiz.title}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {quiz.score === null ? "لم يُؤدَّ بعد" : `النتيجة: ${quiz.score}`}
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </>
+      ) : null}
+
+
+
       <FeatureSheet
         feature={activeFeature}
         documentTitle={selected?.title}
