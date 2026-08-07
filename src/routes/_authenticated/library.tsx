@@ -19,6 +19,8 @@ import {
   warmPdfEngine,
 } from "@/lib/pdf-text";
 import { generateSummary } from "@/lib/summarize.functions";
+import { generateFlashcards, generateQuiz } from "@/lib/study.functions";
+
 import { supabase } from "@/integrations/supabase/client";
 
 const searchSchema = z.object({

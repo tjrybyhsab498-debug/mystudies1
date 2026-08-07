@@ -87,11 +87,15 @@ function AuthPage() {
         });
         if (error) throw error;
         if (!data.session) {
-          setPendingConfirm(true);
-          toast.success("تم إنشاء الحساب! افحص بريدك لتأكيد التسجيل.");
-          return;
+          // الحساب مفعّل تلقائياً؛ في حال عدم إرجاع جلسة ندخل مباشرة بكلمة المرور.
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: emailResult.data,
+            password: passResult.data,
+          });
+          if (signInError) throw signInError;
         }
         toast.success("مرحباً بك في دراستي AI");
+
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: emailResult.data,
