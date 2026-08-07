@@ -3,7 +3,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { useEffect, useRef, useState } from "react";
-import { FileText, Loader2, Sparkles, Trash2, Upload, X } from "lucide-react";
+import {
+  FileText,
+  Layers,
+  ListChecks,
+  Loader2,
+  Sparkles,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
+
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
@@ -19,6 +29,8 @@ import {
   warmPdfEngine,
 } from "@/lib/pdf-text";
 import { generateSummary } from "@/lib/summarize.functions";
+import { generateFlashcards, generateQuiz } from "@/lib/study.functions";
+
 import { supabase } from "@/integrations/supabase/client";
 
 const searchSchema = z.object({
@@ -96,10 +108,61 @@ function LibraryPage() {
     },
   });
 
+  const { data: decks } = useQuery({
+    queryKey: ["decks"],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("flashcard_decks")
+        .select("id, title, card_count")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      return data ?? [];
+    },
+  });
+
+  const { data: quizzes } = useQuery({
+    queryKey: ["quizzes"],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("quizzes")
+        .select("id, title, score")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      return data ?? [];
+    },
+  });
+
+
   const clearFeature = () => navigate({ search: { feature: "" } });
 
   const runFeature = useMutation({
-    mutationFn: async ({ doc, config }: { doc: DocumentRow; config: FeatureRunConfig }) => {
+    mutationFn: async ({
+      doc,
+      config,
+    }: {
+      doc: DocumentRow;
+      config: FeatureRunConfig;
+    }): Promise<{ to: string; id: string }> => {
+      const featureKind = activeFeature?.id ?? "summarize";
+
+      // الخريطة الذهنية تُبنى من ملخص جاهز بدون استدعاء ذكاء اصطناعي جديد.
+      if (featureKind === "mindmap") {
+        const { data: existing } = await supabase
+          .from("summaries")
+          .select("id")
+          .eq("document_id", doc.id)
+          .eq("status", "ready")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!existing) {
+          throw new Error("لا يوجد ملخص جاهز لهذا الملف. ولّد ملخصاً أولاً ثم افتح الخريطة.");
+        }
+        return { to: "mindmap", id: existing.id as string };
+      }
+
       const cacheKey = pdfCacheKey(doc.id, config.pageFrom, config.pageTo);
       const cached = await getCachedPages(cacheKey);
 
@@ -124,10 +187,38 @@ function LibraryPage() {
 
       const sourceText = buildSourceText(
         pages,
-        config.depth === "comprehensive" ? 320_000 : 120_000,
+        config.depth === "comprehensive" && featureKind === "summarize" ? 320_000 : 120_000,
       );
       if (sourceText.length < 200) {
         throw new Error("لم يُعثر على نص قابل للقراءة في هذا النطاق (قد يكون الملف صوراً ممسوحة).");
+      }
+
+      if (featureKind === "flashcards") {
+        setProgress("الذكاء الاصطناعي يصنع بطاقاتك…");
+        const result = await generateFlashcards({
+          data: {
+            documentId: doc.id,
+            pageFrom: config.pageFrom,
+            pageTo: config.pageTo,
+            count: config.count,
+            sourceText,
+          },
+        });
+        return { to: "flashcards", id: result.deckId };
+      }
+
+      if (featureKind === "quiz") {
+        setProgress("الذكاء الاصطناعي يضع أسئلة اختبارك…");
+        const result = await generateQuiz({
+          data: {
+            documentId: doc.id,
+            pageFrom: config.pageFrom,
+            pageTo: config.pageTo,
+            count: config.count,
+            sourceText,
+          },
+        });
+        return { to: "quiz", id: result.quizId };
       }
 
       setProgress(
@@ -144,21 +235,32 @@ function LibraryPage() {
           sourceText,
         },
       });
-      return result.summaryId;
+      return { to: "summary", id: result.summaryId };
     },
-    onSuccess: async (summaryId) => {
+    onSuccess: async ({ to, id }) => {
       setProgress(null);
       setSelected(null);
-      await queryClient.invalidateQueries({ queryKey: ["summaries"] });
+      await queryClient.invalidateQueries();
       clearFeature();
-      toast.success("تم توليد الكبسولة الذكية");
-      navigate({ to: "/summary/$id", params: { id: summaryId } });
+      if (to === "summary") {
+        toast.success("تم توليد الكبسولة الذكية");
+        navigate({ to: "/summary/$id", params: { id } });
+      } else if (to === "flashcards") {
+        toast.success("جاهزة! ابدأ الحفظ بالبطاقات");
+        navigate({ to: "/flashcards/$id", params: { id } });
+      } else if (to === "quiz") {
+        toast.success("اختبارك جاهز");
+        navigate({ to: "/quiz/$id", params: { id } });
+      } else {
+        navigate({ to: "/mindmap/$id", params: { id } });
+      }
     },
     onError: (error) => {
       setProgress(null);
       toast.error(error instanceof Error ? error.message : "تعذّر تنفيذ الميزة");
     },
   });
+
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -350,6 +452,62 @@ function LibraryPage() {
           </div>
         </>
       ) : null}
+
+      {decks && decks.length > 0 ? (
+        <>
+          <h2 className="mt-7 text-base font-bold text-foreground">بطاقاتي</h2>
+          <div className="mt-3 space-y-2">
+            {decks.map((deck) => (
+              <Link
+                key={deck.id}
+                to="/flashcards/$id"
+                params={{ id: deck.id }}
+                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-soft"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                  <Layers className="size-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold text-foreground">
+                    {deck.title}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{deck.card_count} بطاقة</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </>
+      ) : null}
+
+      {quizzes && quizzes.length > 0 ? (
+        <>
+          <h2 className="mt-7 text-base font-bold text-foreground">اختباراتي</h2>
+          <div className="mt-3 space-y-2">
+            {quizzes.map((quiz) => (
+              <Link
+                key={quiz.id}
+                to="/quiz/$id"
+                params={{ id: quiz.id }}
+                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-soft"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                  <ListChecks className="size-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold text-foreground">
+                    {quiz.title}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {quiz.score === null ? "لم يُؤدَّ بعد" : `النتيجة: ${quiz.score}`}
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </>
+      ) : null}
+
+
 
       <FeatureSheet
         feature={activeFeature}

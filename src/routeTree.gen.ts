@@ -13,10 +13,14 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedFocusRouteImport } from './routes/_authenticated/focus'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedTutorRouteImport } from './routes/_authenticated/tutor'
+import { Route as AuthenticatedFlashcardsIdRouteImport } from './routes/_authenticated/flashcards.$id'
+import { Route as AuthenticatedMindmapIdRouteImport } from './routes/_authenticated/mindmap.$id'
+import { Route as AuthenticatedQuizIdRouteImport } from './routes/_authenticated/quiz.$id'
 import { Route as AuthenticatedSummaryIdRouteImport } from './routes/_authenticated/summary.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -38,6 +42,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedFocusRoute = AuthenticatedFocusRouteImport.update({
+  id: '/focus',
+  path: '/focus',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   id: '/home',
   path: '/home',
@@ -58,6 +67,22 @@ const AuthenticatedTutorRoute = AuthenticatedTutorRouteImport.update({
   path: '/tutor',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFlashcardsIdRoute =
+  AuthenticatedFlashcardsIdRouteImport.update({
+    id: '/flashcards/$id',
+    path: '/flashcards/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMindmapIdRoute = AuthenticatedMindmapIdRouteImport.update({
+  id: '/mindmap/$id',
+  path: '/mindmap/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedQuizIdRoute = AuthenticatedQuizIdRouteImport.update({
+  id: '/quiz/$id',
+  path: '/quiz/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSummaryIdRoute = AuthenticatedSummaryIdRouteImport.update({
   id: '/summary/$id',
   path: '/summary/$id',
@@ -68,20 +93,28 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/focus': typeof AuthenticatedFocusRoute
   '/home': typeof AuthenticatedHomeRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/tutor': typeof AuthenticatedTutorRoute
+  '/flashcards/$id': typeof AuthenticatedFlashcardsIdRoute
+  '/mindmap/$id': typeof AuthenticatedMindmapIdRoute
+  '/quiz/$id': typeof AuthenticatedQuizIdRoute
   '/summary/$id': typeof AuthenticatedSummaryIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/focus': typeof AuthenticatedFocusRoute
   '/home': typeof AuthenticatedHomeRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/tutor': typeof AuthenticatedTutorRoute
+  '/flashcards/$id': typeof AuthenticatedFlashcardsIdRoute
+  '/mindmap/$id': typeof AuthenticatedMindmapIdRoute
+  '/quiz/$id': typeof AuthenticatedQuizIdRoute
   '/summary/$id': typeof AuthenticatedSummaryIdRoute
 }
 export interface FileRoutesById {
@@ -90,10 +123,14 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/focus': typeof AuthenticatedFocusRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/tutor': typeof AuthenticatedTutorRoute
+  '/_authenticated/flashcards/$id': typeof AuthenticatedFlashcardsIdRoute
+  '/_authenticated/mindmap/$id': typeof AuthenticatedMindmapIdRoute
+  '/_authenticated/quiz/$id': typeof AuthenticatedQuizIdRoute
   '/_authenticated/summary/$id': typeof AuthenticatedSummaryIdRoute
 }
 export interface FileRouteTypes {
@@ -102,20 +139,28 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/focus'
     | '/home'
     | '/library'
     | '/profile'
     | '/tutor'
+    | '/flashcards/$id'
+    | '/mindmap/$id'
+    | '/quiz/$id'
     | '/summary/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/focus'
     | '/home'
     | '/library'
     | '/profile'
     | '/tutor'
+    | '/flashcards/$id'
+    | '/mindmap/$id'
+    | '/quiz/$id'
     | '/summary/$id'
   id:
     | '__root__'
@@ -123,10 +168,14 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/reset-password'
+    | '/_authenticated/focus'
     | '/_authenticated/home'
     | '/_authenticated/library'
     | '/_authenticated/profile'
     | '/_authenticated/tutor'
+    | '/_authenticated/flashcards/$id'
+    | '/_authenticated/mindmap/$id'
+    | '/_authenticated/quiz/$id'
     | '/_authenticated/summary/$id'
   fileRoutesById: FileRoutesById
 }
@@ -167,6 +216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/focus': {
+      id: '/_authenticated/focus'
+      path: '/focus'
+      fullPath: '/focus'
+      preLoaderRoute: typeof AuthenticatedFocusRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/home': {
       id: '/_authenticated/home'
       path: '/home'
@@ -195,6 +251,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTutorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/flashcards/$id': {
+      id: '/_authenticated/flashcards/$id'
+      path: '/flashcards/$id'
+      fullPath: '/flashcards/$id'
+      preLoaderRoute: typeof AuthenticatedFlashcardsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mindmap/$id': {
+      id: '/_authenticated/mindmap/$id'
+      path: '/mindmap/$id'
+      fullPath: '/mindmap/$id'
+      preLoaderRoute: typeof AuthenticatedMindmapIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/quiz/$id': {
+      id: '/_authenticated/quiz/$id'
+      path: '/quiz/$id'
+      fullPath: '/quiz/$id'
+      preLoaderRoute: typeof AuthenticatedQuizIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/summary/$id': {
       id: '/_authenticated/summary/$id'
       path: '/summary/$id'
@@ -206,18 +283,26 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedFocusRoute: typeof AuthenticatedFocusRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedTutorRoute: typeof AuthenticatedTutorRoute
+  AuthenticatedFlashcardsIdRoute: typeof AuthenticatedFlashcardsIdRoute
+  AuthenticatedMindmapIdRoute: typeof AuthenticatedMindmapIdRoute
+  AuthenticatedQuizIdRoute: typeof AuthenticatedQuizIdRoute
   AuthenticatedSummaryIdRoute: typeof AuthenticatedSummaryIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedFocusRoute: AuthenticatedFocusRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedTutorRoute: AuthenticatedTutorRoute,
+  AuthenticatedFlashcardsIdRoute: AuthenticatedFlashcardsIdRoute,
+  AuthenticatedMindmapIdRoute: AuthenticatedMindmapIdRoute,
+  AuthenticatedQuizIdRoute: AuthenticatedQuizIdRoute,
   AuthenticatedSummaryIdRoute: AuthenticatedSummaryIdRoute,
 }
 
@@ -233,13 +318,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

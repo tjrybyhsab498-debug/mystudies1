@@ -48,7 +48,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [pendingConfirm, setPendingConfirm] = useState(false);
+  
 
   useEffect(() => {
     if (!sessionLoading && isAuthenticated) navigate({ to: "/home", replace: true });
@@ -87,11 +87,15 @@ function AuthPage() {
         });
         if (error) throw error;
         if (!data.session) {
-          setPendingConfirm(true);
-          toast.success("تم إنشاء الحساب! افحص بريدك لتأكيد التسجيل.");
-          return;
+          // الحساب مفعّل تلقائياً؛ في حال عدم إرجاع جلسة ندخل مباشرة بكلمة المرور.
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: emailResult.data,
+            password: passResult.data,
+          });
+          if (signInError) throw signInError;
         }
         toast.success("مرحباً بك في دراستي AI");
+
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: emailResult.data,
@@ -144,21 +148,8 @@ function AuthPage() {
     toast.success("أرسلنا رابط استعادة كلمة المرور إلى بريدك");
   };
 
-  if (pendingConfirm) {
-    return (
-      <div className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-6 text-center">
-        <Sparkles className="mx-auto size-10 text-primary" />
-        <h1 className="mt-4 text-xl font-bold text-foreground">افحص بريدك الإلكتروني</h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          أرسلنا رابط تأكيد إلى <span className="font-semibold text-foreground">{email}</span>. بعد
-          الضغط عليه ستتمكن من الدخول إلى حسابك.
-        </p>
-        <Button variant="outline" className="mt-6" onClick={() => setPendingConfirm(false)}>
-          رجوع
-        </Button>
-      </div>
-    );
-  }
+
+
 
   return (
     <div className="mx-auto min-h-screen max-w-lg bg-background px-6 pb-10 pt-[calc(env(safe-area-inset-top)+2.5rem)]">
