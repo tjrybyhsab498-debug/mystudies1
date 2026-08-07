@@ -119,6 +119,13 @@ function HomePage() {
               </Link>
             );
           }
+          if (feature.target === "focus") {
+            return (
+              <Link key={feature.id} to="/focus" className={className}>
+                {card}
+              </Link>
+            );
+          }
           if (feature.target === "home") {
             return (
               <Link key={feature.id} to="/home" className={className}>
@@ -126,6 +133,7 @@ function HomePage() {
               </Link>
             );
           }
+
           return (
             <Link
               key={feature.id}
