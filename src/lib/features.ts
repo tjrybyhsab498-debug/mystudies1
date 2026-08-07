@@ -126,11 +126,12 @@ export const FEATURES: FeatureDef[] = [
     desc: "خرائط ذهنية",
     icon: Network,
     target: "library",
-    pickerHint: "اختر ملفاً لتحويله إلى خريطة ذهنية",
-    configKind: "page-range",
-    ready: false,
-    cta: "توليد الخريطة",
+    pickerHint: "اختر ملفاً لعرض خريطته الذهنية (يلزم وجود ملخص جاهز له)",
+    configKind: "none",
+    ready: true,
+    cta: "افتح الخريطة",
   },
+
   {
     id: "solver",
     title: "حلّال المعادلات",
