@@ -72,7 +72,7 @@ export const FEATURES: FeatureDef[] = [
     target: "library",
     pickerHint: "اختر ملفاً لتوليد بطاقات تعليمية منه",
     configKind: "count",
-    ready: false,
+    ready: true,
     cta: "توليد البطاقات",
   },
   {
@@ -83,7 +83,7 @@ export const FEATURES: FeatureDef[] = [
     target: "library",
     pickerHint: "اختر ملفاً لتوليد امتحان محاكٍ منه",
     configKind: "count",
-    ready: false,
+    ready: true,
     cta: "توليد الاختبار",
   },
   {
@@ -94,9 +94,10 @@ export const FEATURES: FeatureDef[] = [
     target: "focus",
     pickerHint: "ابدأ جلسة تركيز",
     configKind: "none",
-    ready: false,
+    ready: true,
     cta: "ابدأ الجلسة",
   },
+
   {
     id: "audio",
     title: "المذياع الدراسي",
