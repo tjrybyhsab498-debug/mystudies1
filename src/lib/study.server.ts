@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { streamText, Output, NoObjectGeneratedError } from "ai";
+import { streamText, Output } from "ai";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 
 export const STUDY_MODEL = "google/gemini-3.6-flash";
@@ -43,21 +43,14 @@ async function structured<T>(args: {
   prompt: string;
   schema: z.ZodType<T>;
 }): Promise<T> {
-  try {
-    const result = streamText({
-      model: gateway()(STUDY_MODEL),
-      system: args.system,
-      prompt: args.prompt,
-      output: Output.object({ schema: args.schema as never }),
-      maxRetries: 0,
-    });
-    return (await result.output) as T;
-  } catch (error) {
-    if (NoObjectGeneratedError.isInstance(error)) {
-      throw new Error("تعذّر تنسيق النتيجة. حاول مرة أخرى بنطاق أصغر.");
-    }
-    throw error;
-  }
+  const result = streamText({
+    model: gateway()(STUDY_MODEL),
+    system: args.system,
+    prompt: args.prompt,
+    output: Output.object({ schema: args.schema as never }),
+    maxRetries: 0,
+  });
+  return (await result.output) as T;
 }
 
 export async function runFlashcardsModel(args: {
