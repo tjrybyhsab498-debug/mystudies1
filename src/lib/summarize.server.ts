@@ -155,7 +155,7 @@ export function toArabicGatewayError(error: unknown): string {
 function getGateway() {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new Error("LOVABLE_API_KEY is missing");
-  return createLovableAiGatewayProvider(apiKey, undefined, { structuredOutputs: true });
+  return createLovableAiGatewayProvider(apiKey);
 }
 
 async function callModel(args: {
@@ -268,7 +268,7 @@ export async function runSummaryModel(
   const segments = splitByPages(args.sourceText, 22_000).slice(0, 10);
   const total = segments.length;
   const results: (RawSummary | null)[] = new Array(total).fill(null);
-  const CONCURRENCY = 3;
+  const CONCURRENCY = 2;
   let done = 0;
 
   const runSegment = async (index: number) => {
@@ -284,7 +284,7 @@ export async function runSummaryModel(
       partLabel,
     });
 
-    for (const model of [SUMMARY_MODEL_DEEP, SUMMARY_MODEL_STANDARD, SUMMARY_MODEL_STANDARD]) {
+    for (const model of [SUMMARY_MODEL_DEEP, SUMMARY_MODEL_STANDARD]) {
       try {
         results[index] = await callModel({ model, system: DEEP_RULES, prompt });
         break;

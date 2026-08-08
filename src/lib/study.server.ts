@@ -7,7 +7,7 @@ export const STUDY_MODEL = "google/gemini-3.6-flash";
 function gateway() {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new Error("LOVABLE_API_KEY is missing");
-  return createLovableAiGatewayProvider(apiKey, undefined, { structuredOutputs: true });
+  return createLovableAiGatewayProvider(apiKey);
 }
 
 export const flashcardsSchema = z.object({

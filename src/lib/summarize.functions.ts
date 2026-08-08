@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { parseGenerateSummaryInput } from "@/lib/summary-inputs";
 import {
   chunkSourceText,
   countWords,
@@ -8,17 +8,9 @@ import {
   toArabicGatewayError,
 } from "@/lib/summarize.server";
 
-const generateSummaryInput = z.object({
-  documentId: z.string().uuid(),
-  pageFrom: z.number().int().min(1).max(10_000).nullable(),
-  pageTo: z.number().int().min(1).max(10_000).nullable(),
-  depth: z.enum(["standard", "comprehensive"]).default("standard"),
-  sourceText: z.string().trim().min(200).max(400_000),
-});
-
 export const generateSummary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => generateSummaryInput.parse(input))
+  .inputValidator(parseGenerateSummaryInput)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
@@ -69,7 +61,7 @@ export const generateSummary = createServerFn({ method: "POST" })
         depth: data.depth,
       });
 
-      await supabase
+      const { error: summaryUpdateError } = await supabase
         .from("summaries")
         .update({
           status: "ready",
@@ -78,6 +70,7 @@ export const generateSummary = createServerFn({ method: "POST" })
           title: content.title || doc.title,
         })
         .eq("id", row.id);
+      if (summaryUpdateError) throw new Error("تعذّر حفظ نتيجة الملخص");
 
       const chunks = chunkSourceText(data.sourceText).map((chunk) => ({
         ...chunk,
@@ -85,8 +78,13 @@ export const generateSummary = createServerFn({ method: "POST" })
         document_id: doc.id,
       }));
       if (chunks.length > 0) {
-        await supabase.from("document_chunks").delete().eq("document_id", doc.id);
-        await supabase.from("document_chunks").insert(chunks);
+        const { error: deleteChunksError } = await supabase
+          .from("document_chunks")
+          .delete()
+          .eq("document_id", doc.id);
+        if (deleteChunksError) throw new Error("تعذّر تحديث فهرس الملف");
+        const { error: insertChunksError } = await supabase.from("document_chunks").insert(chunks);
+        if (insertChunksError) throw new Error("تعذّر فهرسة محتوى الملف");
       }
 
       return { summaryId: row.id as string };

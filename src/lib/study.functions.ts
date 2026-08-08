@@ -1,28 +1,21 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-const sourceInput = z.object({
-  documentId: z.string().uuid(),
-  pageFrom: z.number().int().min(1).max(10_000).nullable(),
-  pageTo: z.number().int().min(1).max(10_000).nullable(),
-  count: z.number().int().min(5).max(60).default(20),
-  sourceText: z.string().trim().min(200).max(150_000),
-});
+import { parseStudySourceInput, parseTutorInput } from "@/lib/study-inputs";
 
 export const generateFlashcards = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => sourceInput.parse(input))
+  .inputValidator(parseStudySourceInput)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { runFlashcardsModel } = await import("@/lib/study.server");
     const { toArabicGatewayError } = await import("@/lib/summarize.server");
 
-    const { data: doc } = await supabase
+    const { data: doc, error: docError } = await supabase
       .from("documents")
       .select("id, title")
       .eq("id", data.documentId)
       .maybeSingle();
+    if (docError) throw new Error("تعذّر قراءة بيانات الملف");
     if (!doc) throw new Error("الملف غير موجود");
 
     try {
@@ -54,7 +47,13 @@ export const generateFlashcards = createServerFn({ method: "POST" })
         back: card.back.slice(0, 2000),
         page: card.page,
       }));
-      if (rows.length > 0) await supabase.from("flashcards").insert(rows);
+      if (rows.length > 0) {
+        const { error: cardsError } = await supabase.from("flashcards").insert(rows);
+        if (cardsError) {
+          await supabase.from("flashcard_decks").delete().eq("id", deck.id);
+          throw new Error("تعذّر حفظ البطاقات");
+        }
+      }
 
       return { deckId: deck.id as string, count: rows.length };
     } catch (error) {
@@ -64,17 +63,18 @@ export const generateFlashcards = createServerFn({ method: "POST" })
 
 export const generateQuiz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => sourceInput.parse(input))
+  .inputValidator(parseStudySourceInput)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { runQuizModel } = await import("@/lib/study.server");
     const { toArabicGatewayError } = await import("@/lib/summarize.server");
 
-    const { data: doc } = await supabase
+    const { data: doc, error: docError } = await supabase
       .from("documents")
       .select("id, title")
       .eq("id", data.documentId)
       .maybeSingle();
+    if (docError) throw new Error("تعذّر قراءة بيانات الملف");
     if (!doc) throw new Error("الملف غير موجود");
 
     try {
@@ -105,14 +105,9 @@ export const generateQuiz = createServerFn({ method: "POST" })
     }
   });
 
-const tutorInput = z.object({
-  documentId: z.string().uuid().nullable(),
-  question: z.string().trim().min(2).max(2000),
-});
-
 export const askTutor = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => tutorInput.parse(input))
+  .inputValidator(parseTutorInput)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { pickRelevantChunks, runTutorModel } = await import("@/lib/study.server");
@@ -120,12 +115,13 @@ export const askTutor = createServerFn({ method: "POST" })
 
     let contextText = "";
     if (data.documentId) {
-      const { data: chunks } = await supabase
+      const { data: chunks, error: chunksError } = await supabase
         .from("document_chunks")
         .select("content, page_from")
         .eq("document_id", data.documentId)
         .order("chunk_index", { ascending: true })
         .limit(120);
+      if (chunksError) throw new Error("تعذّر قراءة مقاطع الملف");
       if (chunks && chunks.length > 0) contextText = pickRelevantChunks(chunks, data.question);
     }
 
@@ -142,12 +138,13 @@ export const askTutor = createServerFn({ method: "POST" })
       .reverse()
       .map((m) => ({ role: m.role === "assistant" ? ("assistant" as const) : ("user" as const), content: m.content }));
 
-    await supabase.from("tutor_messages").insert({
+    const { error: userMessageError } = await supabase.from("tutor_messages").insert({
       user_id: userId,
       document_id: data.documentId,
       role: "user",
       content: data.question,
     });
+    if (userMessageError) throw new Error("تعذّر حفظ سؤالك");
 
     try {
       const answer = await runTutorModel({
@@ -156,12 +153,13 @@ export const askTutor = createServerFn({ method: "POST" })
         question: data.question,
       });
 
-      await supabase.from("tutor_messages").insert({
+      const { error: assistantMessageError } = await supabase.from("tutor_messages").insert({
         user_id: userId,
         document_id: data.documentId,
         role: "assistant",
         content: answer,
       });
+      if (assistantMessageError) throw new Error("وصل الرد لكن تعذّر حفظه");
 
       return { answer };
     } catch (error) {
