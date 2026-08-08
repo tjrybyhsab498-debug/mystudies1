@@ -49,7 +49,7 @@ async function structured<T>(args: {
       system: args.system,
       prompt: args.prompt,
       output: Output.object({ schema: args.schema as never }),
-      maxRetries: 1,
+      maxRetries: 0,
     });
     return (await result.output) as T;
   } catch (error) {
@@ -150,7 +150,7 @@ export async function runTutorModel(args: {
       ...args.history.slice(-10),
       { role: "user" as const, content: args.question },
     ],
-    maxRetries: 1,
+    maxRetries: 0,
   });
   return await result.text;
 }

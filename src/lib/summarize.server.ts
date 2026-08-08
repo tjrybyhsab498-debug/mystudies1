@@ -142,19 +142,28 @@ export function normalizeSummary(
 }
 
 export function toArabicGatewayError(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  if (message.includes("429")) return "الخدمة مشغولة حالياً (تجاوز حد الطلبات). حاول بعد قليل.";
-  if (message.includes("402") || /payment required|credit|balance/i.test(message))
+  const record = error != null && typeof error === "object" ? (error as Record<string, unknown>) : null;
+  const status = Number(record?.statusCode ?? record?.status ?? 0);
+  const cause = record?.cause;
+  const message = [
+    error instanceof Error ? error.message : String(error),
+    cause instanceof Error ? cause.message : String(cause ?? ""),
+  ].join(" ");
+  if (status === 429 || message.includes("429"))
+    return "الخدمة مشغولة حالياً (تجاوز حد الطلبات). حاول بعد قليل.";
+  if (status === 402 || message.includes("402") || /payment required|credit|balance/i.test(message))
     return "انتهى رصيد الذكاء الاصطناعي في مساحة العمل. يرجى إضافة رصيد.";
-  if (message.includes("401") || message.includes("403"))
+  if (status === 401 || status === 403 || message.includes("401") || message.includes("403"))
     return "تعذّر التحقق من مفتاح الذكاء الاصطناعي.";
   if (message.startsWith("تعذّر") || message.startsWith("انتهى")) return message;
   return "تعذّر توليد الملخص. حاول مرة أخرى أو قلّل نطاق الصفحات.";
 }
 
 function isTerminalGatewayError(error: unknown): boolean {
+  const record = error != null && typeof error === "object" ? (error as Record<string, unknown>) : null;
+  const status = Number(record?.statusCode ?? record?.status ?? 0);
   const message = error instanceof Error ? error.message : String(error);
-  return /\b40[0-9]\b|payment required|credit|balance/i.test(message);
+  return (status >= 400 && status < 500) || /\b40[0-9]\b|payment required|credit|balance/i.test(message);
 }
 
 function getGateway() {
@@ -175,7 +184,7 @@ async function callModel(args: {
       system: args.system,
       prompt: args.prompt,
       output: Output.object({ schema: summarySchema }),
-      maxRetries: 1,
+      maxRetries: 0,
     });
     return (await result.output) as RawSummary;
   } catch (error) {
