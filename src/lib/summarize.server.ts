@@ -143,8 +143,8 @@ export function normalizeSummary(
 
 export function toArabicGatewayError(error: unknown): string {
   const record = error != null && typeof error === "object" ? (error as Record<string, unknown>) : null;
-  const status = Number(record?.statusCode ?? record?.status ?? 0);
-  const cause = record?.cause;
+  const status = Number(record?.["statusCode"] ?? record?.["status"] ?? 0);
+  const cause = record?.["cause"];
   const message = [
     error instanceof Error ? error.message : String(error),
     cause instanceof Error ? cause.message : String(cause ?? ""),
@@ -161,7 +161,7 @@ export function toArabicGatewayError(error: unknown): string {
 
 function isTerminalGatewayError(error: unknown): boolean {
   const record = error != null && typeof error === "object" ? (error as Record<string, unknown>) : null;
-  const status = Number(record?.statusCode ?? record?.status ?? 0);
+  const status = Number(record?.["statusCode"] ?? record?.["status"] ?? 0);
   const message = error instanceof Error ? error.message : String(error);
   return (status >= 400 && status < 500) || /\b40[0-9]\b|payment required|credit|balance/i.test(message);
 }
