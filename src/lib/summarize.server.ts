@@ -169,7 +169,7 @@ export function toArabicGatewayError(error: unknown): string {
   if (statuses.includes(401) || statuses.includes(403) || message.includes("401") || message.includes("403"))
     return "تعذّر التحقق من مفتاح الذكاء الاصطناعي.";
   if (message.startsWith("تعذّر") || message.startsWith("انتهى")) return message;
-  return "تعذّر توليد الملخص. حاول مرة أخرى أو قلّل نطاق الصفحات.";
+  return "تعذّر الاتصال بخدمة الذكاء الاصطناعي. تحقّق من رصيد مساحة العمل ثم حاول مجدداً.";
 }
 
 function isTerminalGatewayError(error: unknown): boolean {
