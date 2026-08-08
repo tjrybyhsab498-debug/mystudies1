@@ -144,12 +144,17 @@ export function normalizeSummary(
 export function toArabicGatewayError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   if (message.includes("429")) return "الخدمة مشغولة حالياً (تجاوز حد الطلبات). حاول بعد قليل.";
-  if (message.includes("402"))
+  if (message.includes("402") || /payment required|credit|balance/i.test(message))
     return "انتهى رصيد الذكاء الاصطناعي في مساحة العمل. يرجى إضافة رصيد.";
   if (message.includes("401") || message.includes("403"))
     return "تعذّر التحقق من مفتاح الذكاء الاصطناعي.";
   if (message.startsWith("تعذّر") || message.startsWith("انتهى")) return message;
   return "تعذّر توليد الملخص. حاول مرة أخرى أو قلّل نطاق الصفحات.";
+}
+
+function isTerminalGatewayError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /\b40[0-9]\b|payment required|credit|balance/i.test(message);
 }
 
 function getGateway() {
@@ -288,7 +293,8 @@ export async function runSummaryModel(
       try {
         results[index] = await callModel({ model, system: DEEP_RULES, prompt });
         break;
-      } catch {
+      } catch (error) {
+        if (isTerminalGatewayError(error)) throw error;
         // نجرّب النموذج التالي؛ إن فشلت كل المحاولات نتجاوز هذا الجزء.
       }
     }

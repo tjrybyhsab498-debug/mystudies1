@@ -4,7 +4,7 @@ import { parseStudySourceInput, parseTutorInput } from "@/lib/study-inputs";
 
 export const generateFlashcards = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(parseStudySourceInput)
+  .validator(parseStudySourceInput)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { runFlashcardsModel } = await import("@/lib/study.server");
@@ -57,13 +57,14 @@ export const generateFlashcards = createServerFn({ method: "POST" })
 
       return { deckId: deck.id as string, count: rows.length };
     } catch (error) {
+      console.error("[AI feature failed] flashcards", error);
       throw new Error(toArabicGatewayError(error));
     }
   });
 
 export const generateQuiz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(parseStudySourceInput)
+  .validator(parseStudySourceInput)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { runQuizModel } = await import("@/lib/study.server");
@@ -101,13 +102,14 @@ export const generateQuiz = createServerFn({ method: "POST" })
 
       return { quizId: quiz.id as string, count: result.questions.length };
     } catch (error) {
+      console.error("[AI feature failed] quiz", error);
       throw new Error(toArabicGatewayError(error));
     }
   });
 
 export const askTutor = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(parseTutorInput)
+  .validator(parseTutorInput)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { pickRelevantChunks, runTutorModel } = await import("@/lib/study.server");
@@ -163,6 +165,7 @@ export const askTutor = createServerFn({ method: "POST" })
 
       return { answer };
     } catch (error) {
+      console.error("[AI feature failed] tutor", error);
       throw new Error(toArabicGatewayError(error));
     }
   });

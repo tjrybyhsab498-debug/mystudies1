@@ -4,7 +4,7 @@ import { parseGenerateSummaryInput } from "@/lib/summary-inputs";
 
 export const generateSummary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(parseGenerateSummaryInput)
+  .validator(parseGenerateSummaryInput)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { chunkSourceText, countWords, runSummaryModel, toArabicGatewayError } =
@@ -85,6 +85,7 @@ export const generateSummary = createServerFn({ method: "POST" })
 
       return { summaryId: row.id as string };
     } catch (error) {
+      console.error(`[AI feature failed] summary:${data.depth}`, error);
       const message = toArabicGatewayError(error);
       await supabase
         .from("summaries")
