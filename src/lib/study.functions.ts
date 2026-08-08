@@ -140,20 +140,20 @@ export const askTutor = createServerFn({ method: "POST" })
       .reverse()
       .map((m) => ({ role: m.role === "assistant" ? ("assistant" as const) : ("user" as const), content: m.content }));
 
-    const { error: userMessageError } = await supabase.from("tutor_messages").insert({
-      user_id: userId,
-      document_id: data.documentId,
-      role: "user",
-      content: data.question,
-    });
-    if (userMessageError) throw new Error("تعذّر حفظ سؤالك");
-
     try {
       const answer = await runTutorModel({
         context: contextText,
         history: ordered,
         question: data.question,
       });
+
+      const { error: userMessageError } = await supabase.from("tutor_messages").insert({
+        user_id: userId,
+        document_id: data.documentId,
+        role: "user",
+        content: data.question,
+      });
+      if (userMessageError) throw new Error("تعذّر حفظ سؤالك");
 
       const { error: assistantMessageError } = await supabase.from("tutor_messages").insert({
         user_id: userId,
