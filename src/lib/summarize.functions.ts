@@ -1,18 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { parseGenerateSummaryInput } from "@/lib/summary-inputs";
-import {
-  chunkSourceText,
-  countWords,
-  runSummaryModel,
-  toArabicGatewayError,
-} from "@/lib/summarize.server";
 
 export const generateSummary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(parseGenerateSummaryInput)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const { chunkSourceText, countWords, runSummaryModel, toArabicGatewayError } =
+      await import("@/lib/summarize.server");
 
     const { data: doc, error: docError } = await supabase
       .from("documents")
