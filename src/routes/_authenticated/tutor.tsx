@@ -86,7 +86,8 @@ function TutorPage() {
     try {
       const result = await askTutor({ data: { documentId, question } });
       setLocal((prev) => [...prev, { role: "assistant", content: result.answer }]);
-      void queryClient.invalidateQueries({ queryKey: ["tutor-messages", documentId] });
+      await queryClient.invalidateQueries({ queryKey: ["tutor-messages", documentId] });
+      setLocal([]);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "تعذّر الوصول إلى الأستاذ الرقمي");
     } finally {

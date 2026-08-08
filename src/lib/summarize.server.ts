@@ -142,20 +142,47 @@ export function normalizeSummary(
 }
 
 export function toArabicGatewayError(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  if (message.includes("429")) return "الخدمة مشغولة حالياً (تجاوز حد الطلبات). حاول بعد قليل.";
-  if (message.includes("402"))
+  const details: string[] = [];
+  const statuses: number[] = [];
+  const seen = new Set<unknown>();
+  const inspect = (value: unknown, depth = 0) => {
+    if (value == null || depth > 4 || seen.has(value)) return;
+    seen.add(value);
+    if (value instanceof Error) details.push(value.message);
+    else if (typeof value !== "object") details.push(String(value));
+    if (typeof value !== "object") return;
+    const record = value as Record<string, unknown>;
+    const status = Number(record["statusCode"] ?? record["status"] ?? 0);
+    if (Number.isFinite(status) && status > 0) statuses.push(status);
+    inspect(record["cause"], depth + 1);
+    inspect(record["lastError"], depth + 1);
+    inspect(record["error"], depth + 1);
+    const errors = record["errors"];
+    if (Array.isArray(errors)) errors.forEach((item) => inspect(item, depth + 1));
+  };
+  inspect(error);
+  const message = details.join(" ");
+  if (statuses.includes(429) || message.includes("429"))
+    return "الخدمة مشغولة حالياً (تجاوز حد الطلبات). حاول بعد قليل.";
+  if (statuses.includes(402) || message.includes("402") || /payment required|credit|balance/i.test(message))
     return "انتهى رصيد الذكاء الاصطناعي في مساحة العمل. يرجى إضافة رصيد.";
-  if (message.includes("401") || message.includes("403"))
+  if (statuses.includes(401) || statuses.includes(403) || message.includes("401") || message.includes("403"))
     return "تعذّر التحقق من مفتاح الذكاء الاصطناعي.";
   if (message.startsWith("تعذّر") || message.startsWith("انتهى")) return message;
-  return "تعذّر توليد الملخص. حاول مرة أخرى أو قلّل نطاق الصفحات.";
+  return "تعذّر الاتصال بخدمة الذكاء الاصطناعي. تحقّق من رصيد مساحة العمل ثم حاول مجدداً.";
+}
+
+function isTerminalGatewayError(error: unknown): boolean {
+  const record = error != null && typeof error === "object" ? (error as Record<string, unknown>) : null;
+  const status = Number(record?.["statusCode"] ?? record?.["status"] ?? 0);
+  const message = error instanceof Error ? error.message : String(error);
+  return (status >= 400 && status < 500) || /\b40[0-9]\b|payment required|credit|balance/i.test(message);
 }
 
 function getGateway() {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new Error("LOVABLE_API_KEY is missing");
-  return createLovableAiGatewayProvider(apiKey, undefined, { structuredOutputs: true });
+  return createLovableAiGatewayProvider(apiKey);
 }
 
 async function callModel(args: {
@@ -170,7 +197,7 @@ async function callModel(args: {
       system: args.system,
       prompt: args.prompt,
       output: Output.object({ schema: summarySchema }),
-      maxRetries: 1,
+      maxRetries: 0,
     });
     return (await result.output) as RawSummary;
   } catch (error) {
@@ -268,7 +295,7 @@ export async function runSummaryModel(
   const segments = splitByPages(args.sourceText, 22_000).slice(0, 10);
   const total = segments.length;
   const results: (RawSummary | null)[] = new Array(total).fill(null);
-  const CONCURRENCY = 3;
+  const CONCURRENCY = 2;
   let done = 0;
 
   const runSegment = async (index: number) => {
@@ -284,11 +311,12 @@ export async function runSummaryModel(
       partLabel,
     });
 
-    for (const model of [SUMMARY_MODEL_DEEP, SUMMARY_MODEL_STANDARD, SUMMARY_MODEL_STANDARD]) {
+    for (const model of [SUMMARY_MODEL_DEEP, SUMMARY_MODEL_STANDARD]) {
       try {
         results[index] = await callModel({ model, system: DEEP_RULES, prompt });
         break;
-      } catch {
+      } catch (error) {
+        if (isTerminalGatewayError(error)) throw error;
         // نجرّب النموذج التالي؛ إن فشلت كل المحاولات نتجاوز هذا الجزء.
       }
     }
