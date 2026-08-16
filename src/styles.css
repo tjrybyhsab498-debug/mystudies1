@@ -184,3 +184,10 @@
     display: none;
   }
 }
+
+
+#lovable-badge, 
+[data-lovable-badge], 
+a[href*="lovable.dev"] {
+  display: none !important;
+}
